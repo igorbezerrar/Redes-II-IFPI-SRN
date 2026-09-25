@@ -21,13 +21,16 @@ print("Família:", servidor.family)
 print("Tipo:", servidor.type)
 print("Protocolo:", servidor.proto)
 print("Descritor:", servidor.fileno())
+
+servidor.bind((HOST, PORTA))
+servidor.listen()
+
+
 print("Endereço local:", servidor.getsockname())
 print("Timeout:", servidor.gettimeout())
 print(f"Servidor esperando em {HOST}:{PORTA}...")
 
 
-servidor.bind((HOST, PORTA))
-servidor.listen()
 
 conexao, endereco = servidor.accept()
 
