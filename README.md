@@ -99,10 +99,7 @@ Campus São Raimundo Nonato
 ## 👤 Professor
 
 Prof. Msc. Igor Bezerra Reis
-
-<br>
-
-<a href="mailto:igor.bezerra@ifpi.edu.br">Email: igor.bezerra@ifpi.edu.br</a>
+Email: <a href="mailto:igor.bezerra@ifpi.edu.br">igor.bezerra@ifpi.edu.br</a>
 
 ## 📌 Observação
 
