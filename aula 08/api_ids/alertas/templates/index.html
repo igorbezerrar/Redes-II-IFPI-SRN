@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDS didático · Alertas</title>
+  <style>
+    body { background: #1e1e1e; color: #d4d4d4; font-family: system-ui, sans-serif; font-size: 18px; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    code, li { font-family: Consolas, monospace; }
+    .selo { border: 1px solid #ffb300; color: #ffb300; padding: .4rem .6rem; }
+    label { display: block; margin-top: .6rem; }
+    input { width: 100%; box-sizing: border-box; padding: .4rem; font-size: 1rem; background: #252526; color: #d4d4d4; border: 1px solid #3c3c3c; }
+    button { margin-top: .8rem; padding: .5rem 1rem; font-size: 1rem; background: #0e639c; color: #fff; border: 0; cursor: pointer; }
+    li { margin-top: .4rem; }
+    .apagar { margin: 0 0 0 .5rem; padding: .1rem .5rem; background: transparent; border: 1px solid #ffb300; color: #ffb300; }
+    .sucesso { color: #4ec9b0; }
+    .erro { color: #ffb300; }
+  </style>
+</head>
+<body>
+  <h1>IDS didático · Alertas</h1>
+  <!-- <p class="selo">Dados ilustrativos: nenhum alerta desta página veio de tráfego real.</p> -->
+
+  <h2>Alertas <code>GET /alertas</code></h2>
+  <button id="consultar">Consultar lista</button>
+  <ul id="lista"></ul>
+
+  <h2>Novo alerta <code>POST /alertas</code></h2>
+  <form id="formulario">
+    <label>origem <input name="origem" value="203.0.113.8"></label>
+    <label>tipo <input name="tipo" value="acesso_suspeito"></label>
+    <label>descricao <input name="descricao" value="Acesso observado fora do padrão"></label>
+    <button type="submit">Enviar alerta</button>
+  </form>
+  <p id="mensagem"></p>
+
+  <script>
+    const lista = document.querySelector("#lista");
+    const mensagem = document.querySelector("#mensagem");
+
+    // GET /alertas: consulta a API e mostra a lista recebida.
+    async function carregarAlertas() {
+      const resposta = await fetch("/alertas");
+      if (!resposta.ok) throw new Error("Falha na consulta");
+      const alertas = await resposta.json();
+
+      lista.innerHTML = "";
+      for (const alerta of alertas) {
+        const item = document.createElement("li");
+        // textContent (e não innerHTML) impede que um texto enviado vire HTML na página.
+        item.textContent = `#${alerta.id} · ${alerta.origem} · ${alerta.tipo} · ${alerta.descricao}`;
+
+        const botaoApagar = document.createElement("button");
+        botaoApagar.className = "apagar";
+        botaoApagar.textContent = "Apagar";
+        botaoApagar.title = `DELETE /alertas/${alerta.id}`;
+        botaoApagar.addEventListener("click", () => apagarAlerta(alerta.id).catch(mostrarErro));
+
+        item.append(" ", botaoApagar);
+        lista.append(item);
+      }
+    }
+
+    // DELETE /alertas/<id>: apaga um alerta.
+    async function apagarAlerta(id) {
+      const resposta = await fetch(`/alertas/${id}`, { method: "DELETE" });
+      // 204 No Content tem corpo vazio: resposta.json() falharia, então lemos como texto.
+      // Ler o corpo também evita que o Chrome marque a requisição como abortada no Network.
+      const corpo = await resposta.text();
+
+      if (resposta.ok) {
+        mensagem.className = "sucesso";
+        mensagem.textContent = `${resposta.status} · alerta ${id} apagado.`;
+      } else {
+        mensagem.className = "erro";
+        mensagem.textContent = `${resposta.status} · ${corpo}`;
+      }
+      await carregarAlertas(); // um novo GET mostra a lista atualizada
+    }
+
+    // POST /alertas: envia o formulário como JSON.
+    async function enviarAlerta(evento) {
+      evento.preventDefault(); // impede o envio tradicional do formulário
+
+      // 1. Preparar: objeto JavaScript com os três campos do contrato.
+      const formulario = evento.target;
+      const novoAlerta = {
+        origem: formulario.origem.value,
+        tipo: formulario.tipo.value,
+        descricao: formulario.descricao.value,
+      };
+
+      // 2. Enviar: JSON.stringify transforma o objeto em texto JSON.
+      const resposta = await fetch("/alertas", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(novoAlerta)
+      });
+      const corpo = await resposta.json();
+
+      if (resposta.ok) {
+        mensagem.className = "sucesso";
+        mensagem.textContent = `${resposta.status} · alerta ${corpo.id} criado.`;
+        await carregarAlertas(); // um novo GET confirma a criação
+      } else {
+        mensagem.className = "erro";
+        mensagem.textContent = `${resposta.status} · ${JSON.stringify(corpo)}`;
+      }
+    }
+
+    // Sem resposta HTTP (API desligada, por exemplo), o fetch falha e a mensagem aparece aqui.
+    function mostrarErro(erro) {
+      mensagem.className = "erro";
+      mensagem.textContent = erro.message;
+    }
+
+    document.querySelector("#consultar").addEventListener("click", () => carregarAlertas().catch(mostrarErro));
+    document.querySelector("#formulario").addEventListener("submit", (evento) => enviarAlerta(evento).catch(mostrarErro));
+    carregarAlertas().catch(mostrarErro);
+  </script>
+</body>
+</html>

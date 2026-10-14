@@ -1,11 +1,10 @@
 import socket
+import datetime
 
 from protocolo_tcp import enviar_mensagem, receber_mensagem
 
-
 HOST = "127.0.0.1"
 PORTA = 9000
-
 
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -40,6 +39,11 @@ print(f"Cliente conectado: {endereco}")
 while True:
 
     mensagem = receber_mensagem(conexao)
+    
+    if protocolo == "/SAIR":
+        data = datetime.time()
+        conexao.close()
+        
     if mensagem is None:
         print("Cliente desconectou.")
         break

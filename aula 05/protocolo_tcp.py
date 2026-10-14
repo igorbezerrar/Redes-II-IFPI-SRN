@@ -1,4 +1,5 @@
-def enviar_mensagem(socket_conexao, mensagem):
+def enviar_mensagem(socket_conexao, protocolo ,mensagem):
+    mensagem = protocolo + mensagem
     dados = mensagem.encode("utf-8")
     socket_conexao.sendall(dados)
 
